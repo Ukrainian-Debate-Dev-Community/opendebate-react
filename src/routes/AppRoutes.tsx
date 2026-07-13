@@ -1,0 +1,26 @@
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { LoginPage } from "../features/auth/components/LoginPage";
+import { RegisterPage } from "../features/auth/components/RegisterPage";
+import { UnderConstruction } from "../components/UnderConstruction";
+import { useAuthStore } from "../store/authStore";
+
+export const AppRoutes: React.FC = () => {
+  const token = useAuthStore((state) => state.token);
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/login"
+          element={token ? <Navigate to="/" replace /> : <LoginPage />}
+        />
+        <Route
+          path="/register"
+          element={token ? <Navigate to="/" replace /> : <RegisterPage />}
+        />
+        <Route path="/" element={<UnderConstruction />} />
+      </Routes>
+    </BrowserRouter>
+  );
+};
