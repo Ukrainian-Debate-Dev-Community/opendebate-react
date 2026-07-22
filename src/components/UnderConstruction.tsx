@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate, Navigate, Link } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 
 export const UnderConstruction: React.FC = () => {
@@ -17,7 +17,7 @@ export const UnderConstruction: React.FC = () => {
 
   return (
     <div style={{ padding: "2rem", textAlign: "center" }}>
-      <h1 style={{ color: "var(--secondary)" }}> Under Construction </h1>
+      <h1 style={{ color: "var(--secondary)" }}>🚧 Under Construction 🚧</h1>
       <div
         style={{
           background: "var(--bg-light)",
@@ -26,24 +26,67 @@ export const UnderConstruction: React.FC = () => {
           borderRadius: "8px",
           display: "inline-block",
           marginTop: "2rem",
+          minWidth: "300px",
         }}
       >
         <h2>Session Active</h2>
         <p>
           <strong>Welcome back,</strong> {user.username}
         </p>
-        <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
+        <p
+          style={{
+            color: "var(--text-muted)",
+            fontSize: "0.9rem",
+            marginBottom: "2rem",
+          }}
+        >
           User ID: {user.id}
         </p>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "1rem",
+            marginBottom: "2rem",
+          }}
+        >
+          <Link
+            to="/cabinet"
+            style={{
+              padding: "0.75rem",
+              background: "var(--info)",
+              color: "var(--bg-light)",
+              textDecoration: "none",
+              borderRadius: "4px",
+              fontWeight: "bold",
+            }}
+          >
+            Go to User Cabinet
+          </Link>
+          <Link
+            to="/admin"
+            style={{
+              padding: "0.75rem",
+              background: "var(--danger)",
+              color: "var(--bg-light)",
+              textDecoration: "none",
+              borderRadius: "4px",
+              fontWeight: "bold",
+            }}
+          >
+            Go to Admin Panel
+          </Link>
+        </div>
 
         <button
           onClick={handleLogout}
           style={{
-            marginTop: "1rem",
+            width: "100%",
             padding: "0.5rem 1rem",
-            background: "var(--danger)",
-            color: "var(--bg-light)",
-            border: "none",
+            background: "transparent",
+            color: "var(--danger)",
+            border: "1px solid var(--danger)",
             borderRadius: "4px",
             cursor: "pointer",
           }}

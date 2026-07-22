@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LoginPage } from "../features/auth/components/LoginPage";
 import { RegisterPage } from "../features/auth/components/RegisterPage";
 import { UnderConstruction } from "../components/UnderConstruction";
+import { UserCabinet } from "../features/stats/components/UserCabinet";
+import { AdminPanel } from "../features/admin/components/AdminPanel";
 import { useAuthStore } from "../store/authStore";
 
 export const AppRoutes: React.FC = () => {
@@ -19,7 +21,21 @@ export const AppRoutes: React.FC = () => {
           path="/register"
           element={token ? <Navigate to="/" replace /> : <RegisterPage />}
         />
-        <Route path="/" element={<UnderConstruction />} />
+
+        <Route
+          path="/"
+          element={
+            token ? <UnderConstruction /> : <Navigate to="/login" replace />
+          }
+        />
+        <Route
+          path="/cabinet"
+          element={token ? <UserCabinet /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/admin"
+          element={token ? <AdminPanel /> : <Navigate to="/login" replace />}
+        />
       </Routes>
     </BrowserRouter>
   );
