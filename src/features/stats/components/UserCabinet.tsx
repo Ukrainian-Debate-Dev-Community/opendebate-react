@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { Link } from "react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../../store/authStore";
 import { apiClient } from "../../../api/axios";
-import { AxiosError } from "axios";
+import { extractErrorMessage } from "../../../utils/errorHandler";
 
 interface UserStats {
   overview: {
@@ -17,6 +19,7 @@ interface UserStats {
 
 export const UserCabinet: React.FC = () => {
   const user = useAuthStore((state) => state.user);
+  const queryClient = useQueryClient();
 
   const [participantId, setParticipantId] = useState("");
   const [claimToken, setClaimToken] = useState("");
@@ -24,88 +27,64 @@ export const UserCabinet: React.FC = () => {
     type: "success" | "error";
     msg: string;
   } | null>(null);
-  const [isClaiming, setIsClaiming] = useState(false);
 
-  const [stats, setStats] = useState<UserStats | null>(null);
-  const [isLoadingStats, setIsLoadingStats] = useState(true);
-
-  const fetchStats = async () => {
-    if (!user) return;
-    try {
+  // Replaced manual useEffect fetching with useQuery
+  const { data: stats, isLoading: isLoadingStats } = useQuery({
+    queryKey: ["userStats", user?.id],
+    queryFn: async () => {
       const res = await apiClient.get<{ data: UserStats }>(
-        `/users/${user.id}/stats`,
+        `/users/${user?.id}/stats`,
       );
-      setStats(res.data.data);
-    } catch (err) {
-      console.error("Failed to load stats", err);
-    } finally {
-      setIsLoadingStats(false);
-    }
-  };
+      return res.data.data;
+    },
+    enabled: !!user?.id,
+  });
 
-  useEffect(() => {
-    fetchStats();
-  }, [user]);
-
-  const handleClaim = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setClaimStatus(null);
-    setIsClaiming(true);
-
-    try {
-      await apiClient.post(`/users/claim-participant/${participantId}`, {
+  // Replaced manual loading state with useMutation
+  const claimMutation = useMutation({
+    mutationFn: () =>
+      apiClient.post(`/users/claim-participant/${participantId}`, {
         claim_token: claimToken,
-      });
+      }),
+    onSuccess: () => {
       setClaimStatus({
         type: "success",
         msg: "Identity claimed successfully!",
       });
       setParticipantId("");
       setClaimToken("");
-      fetchStats();
-    } catch (err) {
-      if (err instanceof AxiosError && err.response) {
-        setClaimStatus({
-          type: "error",
-          msg: err.response.data.message || "Invalid claim token.",
-        });
-      } else {
-        setClaimStatus({
-          type: "error",
-          msg: "An error occurred during the claim process.",
-        });
-      }
-    } finally {
-      setIsClaiming(false);
-    }
+      // Automatically refresh stats after a successful claim
+      queryClient.invalidateQueries({ queryKey: ["userStats", user?.id] });
+    },
+    onError: (error) => {
+      setClaimStatus({
+        type: "error",
+        msg: extractErrorMessage(error, "Invalid claim token."),
+      });
+    },
+  });
+
+  const handleClaim = (e: React.FormEvent) => {
+    e.preventDefault();
+    setClaimStatus(null);
+    claimMutation.mutate();
   };
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
-      <h1 style={{ color: "var(--primary)" }}>User Cabinet</h1>
+    <div className="container-sm">
+      <Link to="/" className="back-link">
+        &larr; Back to Dashboard
+      </Link>
+      <h1 className="page-title">User Cabinet</h1>
 
-      <div
-        style={{
-          background: "var(--bg-light)",
-          padding: "1.5rem",
-          borderRadius: "8px",
-          border: "1px solid var(--border)",
-          marginBottom: "2rem",
-        }}
-      >
+      <div className="card">
         <h2 style={{ marginTop: 0, color: "var(--secondary)" }}>
           Your Analytics
         </h2>
         {isLoadingStats ? (
           <p>Loading statistics...</p>
         ) : stats ? (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "1rem",
-            }}
-          >
+          <div className="form-grid">
             <div>
               <p>
                 <strong>Total Ballots:</strong>{" "}
@@ -131,22 +110,14 @@ export const UserCabinet: React.FC = () => {
             </div>
           </div>
         ) : (
-          <p style={{ color: "var(--text-muted)" }}>
+          <p className="text-muted">
             No statistics available. Have you claimed your participant
             identities?
           </p>
         )}
       </div>
 
-      {/* Identity Claim Section */}
-      <div
-        style={{
-          background: "var(--bg-light)",
-          padding: "1.5rem",
-          borderRadius: "8px",
-          border: "1px solid var(--border)",
-        }}
-      >
+      <div className="card">
         <h2 style={{ marginTop: 0, color: "var(--secondary)" }}>
           Claim Guest Identity
         </h2>
@@ -156,7 +127,7 @@ export const UserCabinet: React.FC = () => {
               padding: "0.5rem",
               marginBottom: "1rem",
               borderRadius: "4px",
-              color: "var(--bg-light)",
+              color: "white",
               background:
                 claimStatus.type === "success"
                   ? "var(--success)"
@@ -168,67 +139,39 @@ export const UserCabinet: React.FC = () => {
         )}
         <form
           onSubmit={handleClaim}
-          style={{ display: "flex", gap: "1rem", alignItems: "flex-end" }}
+          style={{
+            display: "flex",
+            gap: "1rem",
+            alignItems: "flex-end",
+            flexWrap: "wrap",
+          }}
         >
-          <div style={{ flex: 1 }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.9rem",
-                marginBottom: "0.5rem",
-              }}
-            >
-              Participant ID
-            </label>
+          <div style={{ flex: 1, minWidth: "150px" }}>
+            <label className="form-label">Participant ID</label>
             <input
               type="number"
               required
               value={participantId}
               onChange={(e) => setParticipantId(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "0.5rem",
-                borderRadius: "4px",
-                border: "1px solid var(--border)",
-              }}
+              className="form-input"
             />
           </div>
-          <div style={{ flex: 2 }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.9rem",
-                marginBottom: "0.5rem",
-              }}
-            >
-              Claim Token
-            </label>
+          <div style={{ flex: 2, minWidth: "200px" }}>
+            <label className="form-label">Claim Token</label>
             <input
               type="text"
               required
               value={claimToken}
               onChange={(e) => setClaimToken(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "0.5rem",
-                borderRadius: "4px",
-                border: "1px solid var(--border)",
-              }}
+              className="form-input"
             />
           </div>
           <button
             type="submit"
-            disabled={isClaiming}
-            style={{
-              padding: "0.6rem 1.5rem",
-              background: "var(--primary)",
-              color: "var(--bg-light)",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
+            disabled={claimMutation.isPending}
+            className="btn btn-primary"
           >
-            {isClaiming ? "Claiming..." : "Claim"}
+            {claimMutation.isPending ? "Claiming..." : "Claim"}
           </button>
         </form>
       </div>

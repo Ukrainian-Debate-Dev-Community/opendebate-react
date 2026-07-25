@@ -1,6 +1,9 @@
 import React, { useState } from "react";
+import { Link } from "react-router";
 import { apiClient } from "../../../api/axios";
-import { AxiosError } from "axios";
+import { useMutation } from "@tanstack/react-query";
+import { extractErrorMessage } from "../../../utils/errorHandler";
+import type { CreateOrgPayload } from "../../../types/api";
 
 export const AdminPanel: React.FC = () => {
   const [status, setStatus] = useState<{
@@ -9,7 +12,7 @@ export const AdminPanel: React.FC = () => {
   } | null>(null);
 
   const [orgName, setOrgName] = useState("");
-  const [orgType, setOrgType] = useState("academic");
+  const [orgType, setOrgType] = useState<"academic" | "personal">("academic");
   const [ownerId, setOwnerId] = useState("");
 
   const [format, setFormat] = useState({
@@ -22,55 +25,71 @@ export const AdminPanel: React.FC = () => {
     has_reply: false,
   });
 
-  const handleCreateOrg = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await apiClient.post("/organisations", {
-        name: orgName,
-        type: orgType,
-        owner_id: parseInt(ownerId, 10),
-      });
+  const orgMutation = useMutation({
+    mutationFn: (payload: CreateOrgPayload) =>
+      apiClient.post("/organisations", payload),
+    onSuccess: () => {
       setStatus({ type: "success", msg: "Organisation created successfully." });
       setOrgName("");
       setOwnerId("");
-    } catch (err) {
-      handleError(err);
-    }
-  };
+    },
+    onError: (error) =>
+      setStatus({ type: "error", msg: extractErrorMessage(error) }),
+  });
 
-  const handleCreateFormat = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await apiClient.post("/formats", format);
+  const formatMutation = useMutation({
+    mutationFn: (payload: typeof format) => apiClient.post("/formats", payload),
+    onSuccess: () => {
       setStatus({
         type: "success",
         msg: "Global format created successfully.",
       });
-    } catch (err) {
-      handleError(err);
-    }
+      setFormat({
+        name: "",
+        code: "",
+        teams_per_room: 2,
+        speakers_per_team: 2,
+        score_min: 50,
+        score_max: 100,
+        has_reply: false,
+      });
+    },
+    onError: (error) =>
+      setStatus({ type: "error", msg: extractErrorMessage(error) }),
+  });
+
+  const handleCreateOrg = (e: React.FormEvent) => {
+    e.preventDefault();
+    orgMutation.mutate({
+      name: orgName,
+      type: orgType,
+      online: false,
+      owner_id: parseInt(ownerId, 10),
+    });
   };
 
-  const handleError = (err: unknown) => {
-    if (err instanceof AxiosError && err.response) {
-      setStatus({
-        type: "error",
-        msg: err.response.data.message || "Action failed.",
-      });
-    } else {
-      setStatus({ type: "error", msg: "An unexpected error occurred." });
-    }
+  const handleCreateFormat = (e: React.FormEvent) => {
+    e.preventDefault();
+    formatMutation.mutate(format);
   };
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
-      <h1 style={{ color: "var(--danger)" }}>System Administration</h1>
+    <div className="container-sm">
+      <Link to="/" className="back-link">
+        &larr; Back to Dashboard
+      </Link>
+      <h1
+        className="page-title"
+        style={{ color: "var(--danger)", borderBottomColor: "var(--danger)" }}
+      >
+        System Administration
+      </h1>
 
       {status && (
         <div
           style={{
             padding: "1rem",
-            marginBottom: "1rem",
+            marginBottom: "1.5rem",
             borderRadius: "4px",
             color: "var(--bg-light)",
             background:
@@ -81,96 +100,100 @@ export const AdminPanel: React.FC = () => {
         </div>
       )}
 
-      <div
-        style={{
-          background: "var(--bg-light)",
-          padding: "1.5rem",
-          borderRadius: "8px",
-          border: "1px solid var(--border)",
-          marginBottom: "2rem",
-        }}
-      >
-        <h2 style={{ marginTop: 0 }}>Create Organisation</h2>
+      <div className="card">
+        <h2 style={{ marginTop: 0, color: "var(--secondary)" }}>
+          Create Organisation
+        </h2>
         <form
           onSubmit={handleCreateOrg}
-          style={{ display: "grid", gap: "1rem" }}
+          className="form-grid"
+          style={{ alignItems: "end" }}
         >
-          <input
-            type="text"
-            placeholder="Organisation Name (e.g. Ultimate Club)"
-            value={orgName}
-            onChange={(e) => setOrgName(e.target.value)}
-            required
-            style={{ padding: "0.5rem" }}
-          />
-          <input
-            type="text"
-            placeholder="Type (e.g. academic)"
-            value={orgType}
-            onChange={(e) => setOrgType(e.target.value)}
-            required
-            style={{ padding: "0.5rem" }}
-          />
-          <input
-            type="number"
-            placeholder="Owner User ID"
-            value={ownerId}
-            onChange={(e) => setOwnerId(e.target.value)}
-            required
-            style={{ padding: "0.5rem" }}
-          />
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Organisation Name</label>
+            <input
+              type="text"
+              placeholder="e.g. Ultimate Club"
+              value={orgName}
+              onChange={(e) => setOrgName(e.target.value)}
+              required
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Type</label>
+            <select
+              value={orgType}
+              onChange={(e) =>
+                setOrgType(e.target.value as "academic" | "personal")
+              }
+              required
+              className="form-input"
+            >
+              <option value="academic">Academic</option>
+              <option value="personal">Personal</option>
+            </select>
+          </div>
+
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Owner User ID</label>
+            <input
+              type="number"
+              min="1"
+              placeholder="e.g. 1"
+              value={ownerId}
+              onChange={(e) => setOwnerId(e.target.value)}
+              required
+              className="form-input"
+            />
+          </div>
+
           <button
             type="submit"
-            style={{
-              padding: "0.75rem",
-              background: "var(--danger)",
-              color: "var(--bg-light)",
-              border: "none",
-              cursor: "pointer",
-            }}
+            disabled={orgMutation.isPending}
+            className="btn btn-danger"
           >
-            Create Organisation
+            {orgMutation.isPending ? "Creating..." : "Create Organisation"}
           </button>
         </form>
       </div>
 
-      <div
-        style={{
-          background: "var(--bg-light)",
-          padding: "1.5rem",
-          borderRadius: "8px",
-          border: "1px solid var(--border)",
-        }}
-      >
-        <h2 style={{ marginTop: 0 }}>Create Global Format</h2>
-        <form
-          onSubmit={handleCreateFormat}
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "1rem",
-          }}
-        >
-          <input
-            type="text"
-            placeholder="Format Name"
-            value={format.name}
-            onChange={(e) => setFormat({ ...format, name: e.target.value })}
-            required
-            style={{ padding: "0.5rem" }}
-          />
-          <input
-            type="text"
-            placeholder="Code (e.g. BP, STD2v2)"
-            value={format.code}
-            onChange={(e) => setFormat({ ...format, code: e.target.value })}
-            required
-            style={{ padding: "0.5rem" }}
-          />
-          <label>
-            Teams per Room:{" "}
+      <div className="card">
+        <h2 style={{ marginTop: 0, color: "var(--secondary)" }}>
+          Create Global Format
+        </h2>
+        <form onSubmit={handleCreateFormat} className="form-grid">
+          {/* Inputs remain unchanged from your original component */}
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Format Name</label>
+            <input
+              type="text"
+              placeholder="e.g. British Parliamentary"
+              value={format.name}
+              onChange={(e) => setFormat({ ...format, name: e.target.value })}
+              required
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Code</label>
+            <input
+              type="text"
+              placeholder="e.g. BP"
+              value={format.code}
+              onChange={(e) => setFormat({ ...format, code: e.target.value })}
+              required
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Teams per Room</label>
             <input
               type="number"
+              min="2"
               value={format.teams_per_room}
               onChange={(e) =>
                 setFormat({
@@ -179,13 +202,15 @@ export const AdminPanel: React.FC = () => {
                 })
               }
               required
-              style={{ width: "60px" }}
+              className="form-input"
             />
-          </label>
-          <label>
-            Speakers per Team:{" "}
+          </div>
+
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Speakers per Team</label>
             <input
               type="number"
+              min="1"
               value={format.speakers_per_team}
               onChange={(e) =>
                 setFormat({
@@ -194,11 +219,12 @@ export const AdminPanel: React.FC = () => {
                 })
               }
               required
-              style={{ width: "60px" }}
+              className="form-input"
             />
-          </label>
-          <label>
-            Min Score:{" "}
+          </div>
+
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Minimum Score</label>
             <input
               type="number"
               value={format.score_min}
@@ -206,11 +232,12 @@ export const AdminPanel: React.FC = () => {
                 setFormat({ ...format, score_min: parseInt(e.target.value) })
               }
               required
-              style={{ width: "60px" }}
+              className="form-input"
             />
-          </label>
-          <label>
-            Max Score:{" "}
+          </div>
+
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Maximum Score</label>
             <input
               type="number"
               value={format.score_max}
@@ -218,31 +245,37 @@ export const AdminPanel: React.FC = () => {
                 setFormat({ ...format, score_max: parseInt(e.target.value) })
               }
               required
-              style={{ width: "60px" }}
+              className="form-input"
             />
-          </label>
-          <label style={{ gridColumn: "span 2" }}>
+          </div>
+
+          <label
+            className="form-group"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              gridColumn: "span 2",
+              margin: "0.5rem 0",
+            }}
+          >
             <input
               type="checkbox"
               checked={format.has_reply}
               onChange={(e) =>
                 setFormat({ ...format, has_reply: e.target.checked })
               }
-            />{" "}
-            Has Reply Speeches?
+            />
+            Format includes reply speeches?
           </label>
+
           <button
             type="submit"
-            style={{
-              gridColumn: "span 2",
-              padding: "0.75rem",
-              background: "var(--danger)",
-              color: "var(--bg-light)",
-              border: "none",
-              cursor: "pointer",
-            }}
+            disabled={formatMutation.isPending}
+            className="btn btn-danger"
+            style={{ gridColumn: "span 2" }}
           >
-            Create Format
+            {formatMutation.isPending ? "Creating..." : "Create Format"}
           </button>
         </form>
       </div>

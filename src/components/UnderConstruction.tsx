@@ -1,14 +1,12 @@
 import React from "react";
-import { useNavigate, Navigate, Link } from "react-router-dom";
+import { useNavigate, Navigate, Link } from "react-router";
 import { useAuthStore } from "../store/authStore";
 
 export const UnderConstruction: React.FC = () => {
   const { user, token, logout } = useAuthStore();
   const navigate = useNavigate();
 
-  if (!token || !user) {
-    return <Navigate to="/login" replace />;
-  }
+  if (!token || !user) return <Navigate to="/login" replace />;
 
   const handleLogout = () => {
     logout();
@@ -16,30 +14,22 @@ export const UnderConstruction: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: "2rem", textAlign: "center" }}>
+    <div className="container-center">
       <h1 style={{ color: "var(--secondary)" }}>🚧 Under Construction 🚧</h1>
+
       <div
+        className="card"
         style={{
-          background: "var(--bg-light)",
-          border: `2px dashed var(--warning)`,
-          padding: "2rem",
-          borderRadius: "8px",
-          display: "inline-block",
-          marginTop: "2rem",
+          border: "2px dashed var(--warning)",
           minWidth: "300px",
+          textAlign: "center",
         }}
       >
         <h2>Session Active</h2>
         <p>
           <strong>Welcome back,</strong> {user.username}
         </p>
-        <p
-          style={{
-            color: "var(--text-muted)",
-            fontSize: "0.9rem",
-            marginBottom: "2rem",
-          }}
-        >
+        <p className="text-muted" style={{ marginBottom: "2rem" }}>
           User ID: {user.id}
         </p>
 
@@ -51,45 +41,23 @@ export const UnderConstruction: React.FC = () => {
             marginBottom: "2rem",
           }}
         >
-          <Link
-            to="/cabinet"
-            style={{
-              padding: "0.75rem",
-              background: "var(--info)",
-              color: "var(--bg-light)",
-              textDecoration: "none",
-              borderRadius: "4px",
-              fontWeight: "bold",
-            }}
-          >
+          <Link to="/organisations" className="btn btn-success">
+            Go to Organisation Directory
+          </Link>
+          <Link to="/cabinet" className="btn btn-info">
             Go to User Cabinet
           </Link>
-          <Link
-            to="/admin"
-            style={{
-              padding: "0.75rem",
-              background: "var(--danger)",
-              color: "var(--bg-light)",
-              textDecoration: "none",
-              borderRadius: "4px",
-              fontWeight: "bold",
-            }}
-          >
-            Go to Admin Panel
-          </Link>
+
+          {user?.isAdmin && (
+            <Link to="/admin" className="btn btn-danger">
+              Go to Global Admin Panel
+            </Link>
+          )}
         </div>
 
         <button
           onClick={handleLogout}
-          style={{
-            width: "100%",
-            padding: "0.5rem 1rem",
-            background: "transparent",
-            color: "var(--danger)",
-            border: "1px solid var(--danger)",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
+          className="btn btn-outline-danger btn-block"
         >
           End Session
         </button>
