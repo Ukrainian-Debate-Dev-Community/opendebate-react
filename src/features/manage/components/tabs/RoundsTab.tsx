@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchEventRounds,
   createRound,
+  releaseAllRounds,
   fetchRoundRooms,
   createRoom,
   deleteRoom,
@@ -20,6 +21,7 @@ export const RoundsTab: React.FC<{ eventId: number }> = ({ eventId }) => {
   const [showAddRound, setShowAddRound] = useState(false);
   const [newRoundName, setNewRoundName] = useState("");
   const [newRoundSequence, setNewRoundSequence] = useState<number>(1);
+  const [isRoundHidden, setIsRoundHidden] = useState(false);
   const [selectedRoundId, setSelectedRoundId] = useState<number | null>(null);
 
   const [showAddRoom, setShowAddRoom] = useState(false);
@@ -57,15 +59,29 @@ export const RoundsTab: React.FC<{ eventId: number }> = ({ eventId }) => {
   });
 
   const addRoundMutation = useMutation({
-    mutationFn: (payload: { name: string; sequence: number }) =>
-      createRound(eventId, payload),
+    mutationFn: (payload: {
+      name: string;
+      sequence: number;
+      is_hidden?: boolean;
+    }) => createRound(eventId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rounds", eventId] });
       setNewRoundName("");
+      setIsRoundHidden(false);
       setShowAddRound(false);
     },
     onError: (error) =>
       alert(extractErrorMessage(error, "Failed to create round.")),
+  });
+
+  const releaseAllMutation = useMutation({
+    mutationFn: () => releaseAllRounds(eventId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rounds", eventId] });
+      alert("All hidden rounds have been released to the public.");
+    },
+    onError: (error) =>
+      alert(extractErrorMessage(error, "Failed to release rounds.")),
   });
 
   const addRoomMutation = useMutation({
@@ -101,7 +117,11 @@ export const RoundsTab: React.FC<{ eventId: number }> = ({ eventId }) => {
 
   const handleAddRoundSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    addRoundMutation.mutate({ name: newRoundName, sequence: newRoundSequence });
+    addRoundMutation.mutate({
+      name: newRoundName,
+      sequence: newRoundSequence,
+      is_hidden: isRoundHidden,
+    });
   };
 
   const handleAddRoomSubmit = (e: React.FormEvent) => {
@@ -170,6 +190,9 @@ export const RoundsTab: React.FC<{ eventId: number }> = ({ eventId }) => {
     );
   }
 
+  // determine if there are any hidden rounds to enable/disable the Release All button
+  const hasHiddenRounds = rounds?.some((r: any) => r.is_hidden);
+
   return (
     <div>
       <div
@@ -181,12 +204,28 @@ export const RoundsTab: React.FC<{ eventId: number }> = ({ eventId }) => {
         }}
       >
         <h2>Tournament Rounds</h2>
-        <button
-          onClick={() => setShowAddRound(!showAddRound)}
-          className="btn btn-success"
-        >
-          {showAddRound ? "Cancel" : "+ Create Round"}
-        </button>
+        <div style={{ display: "flex", gap: "1rem" }}>
+          <button
+            onClick={() => {
+              if (
+                window.confirm("Release all hidden rounds to the public draw?")
+              )
+                releaseAllMutation.mutate();
+            }}
+            disabled={releaseAllMutation.isPending || !hasHiddenRounds}
+            className="btn btn-warning"
+          >
+            {releaseAllMutation.isPending
+              ? "Releasing..."
+              : "Release All Rounds"}
+          </button>
+          <button
+            onClick={() => setShowAddRound(!showAddRound)}
+            className="btn btn-success"
+          >
+            {showAddRound ? "Cancel" : "+ Create Round"}
+          </button>
+        </div>
       </div>
 
       {showAddRound && (
@@ -221,6 +260,26 @@ export const RoundsTab: React.FC<{ eventId: number }> = ({ eventId }) => {
               className="form-input"
             />
           </div>
+          <div
+            className="form-group"
+            style={{ marginBottom: 0, paddingBottom: "0.5rem" }}
+          >
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={isRoundHidden}
+                onChange={(e) => setIsRoundHidden(e.target.checked)}
+              />
+              Keep this round hidden from the public
+            </label>
+          </div>
           <button
             type="submit"
             disabled={addRoundMutation.isPending}
@@ -242,7 +301,7 @@ export const RoundsTab: React.FC<{ eventId: number }> = ({ eventId }) => {
         }}
       >
         {roundsLoading && <p>Loading rounds...</p>}
-        {rounds?.map((round) => (
+        {rounds?.map((round: any) => (
           <button
             key={round.id}
             onClick={() => {
@@ -251,7 +310,7 @@ export const RoundsTab: React.FC<{ eventId: number }> = ({ eventId }) => {
             }}
             className="card"
             style={{
-              minWidth: "150px",
+              minWidth: "160px",
               cursor: "pointer",
               marginBottom: 0,
               border:
@@ -265,11 +324,16 @@ export const RoundsTab: React.FC<{ eventId: number }> = ({ eventId }) => {
             <h3 style={{ margin: "0 0 0.5rem 0", color: "var(--primary)" }}>
               {round.name}
             </h3>
-            <span
-              className={`badge ${round.status === "completed" ? "badge-success" : "badge-secondary"}`}
-            >
-              {round.status}
-            </span>
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              <span
+                className={`badge ${round.status === "completed" ? "badge-success" : "badge-secondary"}`}
+              >
+                {round.status}
+              </span>
+              {round.is_hidden && (
+                <span className="badge badge-warning">Hidden</span>
+              )}
+            </div>
           </button>
         ))}
       </div>
