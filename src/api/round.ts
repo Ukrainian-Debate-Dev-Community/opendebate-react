@@ -1,5 +1,5 @@
-import { apiClient } from "../../../api/axios";
-import type { Round, Room, CreateRoomPayload } from "../../../types/api";
+import { apiClient } from "./axios";
+import type { Round, Room, CreateRoomPayload } from "../types/api";
 
 export const fetchEventRounds = async (eventId: number): Promise<Round[]> => {
   const response = await apiClient.get(`/events/${eventId}/rounds`);

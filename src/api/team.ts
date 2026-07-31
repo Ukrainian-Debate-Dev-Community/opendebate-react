@@ -1,9 +1,5 @@
-import { apiClient } from "../../../api/axios";
-import type {
-  EventTeam,
-  CreateTeamPayload,
-  ProposedTeam,
-} from "../../../types/api";
+import { apiClient } from "./axios";
+import type { EventTeam, CreateTeamPayload, ProposedTeam } from "../types/api";
 
 export const fetchEventTeams = async (
   eventId: number,

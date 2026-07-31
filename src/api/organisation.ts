@@ -1,9 +1,9 @@
-import { apiClient } from "../../../api/axios";
+import { apiClient } from "./axios";
 import type {
   Organisation,
   CreateOrgPayload,
   UpdateOrgPayload,
-} from "../../../types/api";
+} from "../types/api";
 
 export const fetchOrganisations = async (): Promise<Organisation[]> => {
   const response = await apiClient.get("/organisations");

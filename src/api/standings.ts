@@ -1,9 +1,9 @@
-import { apiClient } from "../../../api/axios";
+import { apiClient } from "./axios";
 import type {
   CalculatedTeamStanding,
   CalculatedSpeakerStanding,
   EliminationPayload,
-} from "../../../types/api";
+} from "../types/api";
 
 export const fetchCalculatedTeamStandings = async (
   eventId: number,

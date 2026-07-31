@@ -1,8 +1,5 @@
-import { apiClient } from "../../../api/axios";
-import type {
-  SubmitScoresPayload,
-  SubmitFeedbackPayload,
-} from "../../../types/api";
+import { apiClient } from "./axios";
+import type { SubmitScoresPayload, SubmitFeedbackPayload } from "../types/api";
 
 export const submitRoomScores = async (
   roomId: number,
