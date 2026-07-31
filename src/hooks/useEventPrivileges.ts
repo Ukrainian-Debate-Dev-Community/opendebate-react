@@ -1,24 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "../store/authStore";
-import { fetchEventOrganisers } from "../features/events/api/participantApi";
+import { apiClient } from "../api/axios";
+
+const checkAccess = async (eventId: number) => {
+  const response = await apiClient.get(`/events/${eventId}/access`);
+  return response.data.data.isPrivileged;
+};
 
 export const useEventPrivileges = (eventId: number) => {
-  const currentUser = useAuthStore((state) => state.user);
-
-  const { data: organisers, isLoading } = useQuery({
-    queryKey: ["organisers", eventId],
-    queryFn: () => fetchEventOrganisers(eventId),
-    enabled: !!eventId && !!currentUser,
+  const { data: isPrivileged, isLoading } = useQuery({
+    queryKey: ["eventAccess", eventId],
+    queryFn: () => checkAccess(eventId),
+    retry: false,
   });
 
-  const isGlobalAdmin = !!currentUser?.isAdmin;
-  const isOrganiser =
-    organisers?.some((org) => org.user_id === currentUser?.id) ?? false;
-
   return {
-    isPrivileged: isGlobalAdmin || isOrganiser,
-    isGlobalAdmin,
-    isOrganiser,
+    isPrivileged: !!isPrivileged,
     isLoading,
   };
 };

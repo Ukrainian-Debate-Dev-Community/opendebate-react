@@ -17,9 +17,10 @@ export interface Organisation {
   online: boolean;
   link: string | null;
   Owners?: OrganisationOwner[];
+  owner_ids?: number[];
 }
 
-export interface TournamentEvent {
+export interface Event {
   id: number;
   organisation_id: number;
   name: string;
