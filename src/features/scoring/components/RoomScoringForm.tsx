@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { submitRoomScores } from "../../events/api/scoreApi";
+import { submitRoomScores } from "../../../api/score";
 import { extractErrorMessage } from "../../../utils/errorHandler";
 import type { SubmitScoresPayload, Room } from "../../../types/api";
 
