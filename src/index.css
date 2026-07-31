@@ -112,6 +112,11 @@ body {
   width: 100%;
   display: block;
 }
+.btn-secondary {
+  background-color: var(--secondary);
+  color: white;
+  border: none;
+}
 
 .form-group {
   margin-bottom: 1rem;

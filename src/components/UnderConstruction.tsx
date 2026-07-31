@@ -15,20 +15,10 @@ export const UnderConstruction: React.FC = () => {
 
   return (
     <div className="container-center">
-      <h1 style={{ color: "var(--secondary)" }}>🚧 Under Construction 🚧</h1>
+      <h1 style={{ color: "var(--primary)" }}>OpenDebate Dashboard</h1>
 
-      <div
-        className="card"
-        style={{
-          border: "2px dashed var(--warning)",
-          minWidth: "300px",
-          textAlign: "center",
-        }}
-      >
-        <h2>Session Active</h2>
-        <p>
-          <strong>Welcome back,</strong> {user.username}
-        </p>
+      <div className="card" style={{ minWidth: "350px", textAlign: "center" }}>
+        <h2>Welcome back, {user.username}</h2>
         <p className="text-muted" style={{ marginBottom: "2rem" }}>
           User ID: {user.id}
         </p>
@@ -41,23 +31,39 @@ export const UnderConstruction: React.FC = () => {
             marginBottom: "2rem",
           }}
         >
-          <Link to="/organisations" className="btn btn-success">
-            Go to Organisation Directory
+          {/* Everyone */}
+          <Link to="/organisations" className="btn btn-primary">
+            Browse Tournaments
           </Link>
           <Link to="/cabinet" className="btn btn-info">
-            Go to User Cabinet
+            Personal Cabinet & Schedule
           </Link>
 
+          {/* Organiser */}
+          <Link
+            to="/manage/organisations"
+            className="btn btn-secondary"
+            style={{ marginTop: "1rem" }}
+          >
+            Organiser Workspace
+          </Link>
+
+          {/* Global Admins Only */}
           {user?.isAdmin && (
-            <Link to="/admin" className="btn btn-danger">
-              Go to Global Admin Panel
+            <Link
+              to="/admin"
+              className="btn btn-danger"
+              style={{ marginTop: "1rem" }}
+            >
+              Global System Admin Panel
             </Link>
           )}
         </div>
 
         <button
           onClick={handleLogout}
-          className="btn btn-outline-danger btn-block"
+          className="btn btn-outline-danger"
+          style={{ width: "100%" }}
         >
           End Session
         </button>
