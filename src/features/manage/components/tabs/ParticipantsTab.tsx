@@ -4,19 +4,11 @@ import {
   fetchEventParticipants,
   addParticipant,
   removeParticipant,
-} from "../../api/participantApi";
+} from "../../../../api/participant";
 import { extractErrorMessage } from "../../../../utils/errorHandler";
 import type { CreateParticipantPayload } from "../../../../types/api";
 
-interface ParticipantsTabProps {
-  eventId: number;
-  isPrivileged: boolean;
-}
-
-export const ParticipantsTab: React.FC<ParticipantsTabProps> = ({
-  eventId,
-  isPrivileged,
-}) => {
+export const ParticipantsTab: React.FC<{ eventId: number }> = ({ eventId }) => {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -76,14 +68,12 @@ export const ParticipantsTab: React.FC<ParticipantsTabProps> = ({
         }}
       >
         <h2>Participants</h2>
-        {isPrivileged && (
-          <button
-            onClick={() => setShowAddForm(!showAddForm)}
-            className="btn btn-success"
-          >
-            {showAddForm ? "Cancel" : "+ Add Participant"}
-          </button>
-        )}
+        <button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="btn btn-success"
+        >
+          {showAddForm ? "Cancel" : "+ Add Participant"}
+        </button>
       </div>
 
       {generatedToken && (
@@ -111,7 +101,7 @@ export const ParticipantsTab: React.FC<ParticipantsTabProps> = ({
         </div>
       )}
 
-      {showAddForm && isPrivileged && (
+      {showAddForm && (
         <form onSubmit={handleAddSubmit} className="form-grid panel">
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label">Display Name *</label>
@@ -165,7 +155,7 @@ export const ParticipantsTab: React.FC<ParticipantsTabProps> = ({
               <th>Name</th>
               <th>Role</th>
               <th>Status</th>
-              {isPrivileged && <th style={{ textAlign: "right" }}>Actions</th>}
+              <th style={{ textAlign: "right" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -190,24 +180,23 @@ export const ParticipantsTab: React.FC<ParticipantsTabProps> = ({
                   </span>
                 </td>
                 <td>{p.is_eliminated ? "Eliminated" : "Active"}</td>
-                {isPrivileged && (
-                  <td style={{ textAlign: "right" }}>
-                    <button
-                      onClick={() => {
-                        if (window.confirm("Remove this participant?"))
-                          removeMutation.mutate(p.id);
-                      }}
-                      className="btn btn-outline-danger btn-sm"
-                    >
-                      Remove
-                    </button>
-                  </td>
-                )}
+                <td style={{ textAlign: "right" }}>
+                  <button
+                    onClick={() => {
+                      if (window.confirm("Remove this participant?"))
+                        removeMutation.mutate(p.id);
+                    }}
+                    className="btn btn-outline-danger btn-sm"
+                  >
+                    Remove
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
+
       {participantData && participantData.total_pages > 1 && (
         <div
           style={{

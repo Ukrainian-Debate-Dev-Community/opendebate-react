@@ -1,32 +1,12 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchEventFeedback } from "../../api/scoreApi";
+import { fetchEventFeedback } from "../../../../api/score";
 
-interface FeedbackTabProps {
-  eventId: number;
-  isPrivileged: boolean;
-}
-
-export const FeedbackTab: React.FC<FeedbackTabProps> = ({
-  eventId,
-  isPrivileged,
-}) => {
+export const FeedbackTab: React.FC<{ eventId: number }> = ({ eventId }) => {
   const { data: feedbackRecords, isLoading } = useQuery({
     queryKey: ["feedback", eventId],
     queryFn: () => fetchEventFeedback(eventId),
-    enabled: isPrivileged,
   });
-
-  if (!isPrivileged) {
-    return (
-      <div className="panel" style={{ textAlign: "center" }}>
-        <h3 style={{ color: "var(--danger)" }}>Access Denied</h3>
-        <p>
-          Only tournament Organisers can view the confidential feedback records.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div>

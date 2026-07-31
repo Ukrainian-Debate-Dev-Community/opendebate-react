@@ -164,7 +164,6 @@ export const AdminPanel: React.FC = () => {
           Create Global Format
         </h2>
         <form onSubmit={handleCreateFormat} className="form-grid">
-          {/* Inputs remain unchanged from your original component */}
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label">Format Name</label>
             <input

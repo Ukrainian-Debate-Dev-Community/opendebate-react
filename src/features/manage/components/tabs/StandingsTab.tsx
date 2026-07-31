@@ -4,19 +4,11 @@ import {
   fetchCalculatedTeamStandings,
   fetchCalculatedSpeakerStandings,
   processEliminations,
-} from "../../api/standingsApi";
+} from "../../../../api/standings";
 import { extractErrorMessage } from "../../../../utils/errorHandler";
 import type { EliminationPayload } from "../../../../types/api";
 
-interface StandingsTabProps {
-  eventId: number;
-  isPrivileged: boolean;
-}
-
-export const StandingsTab: React.FC<StandingsTabProps> = ({
-  eventId,
-  isPrivileged,
-}) => {
+export const StandingsTab: React.FC<{ eventId: number }> = ({ eventId }) => {
   const queryClient = useQueryClient();
   const [view, setView] = useState<"teams" | "speakers">("teams");
   const [eliminationThreshold, setEliminationThreshold] = useState<number | "">(
@@ -119,62 +111,60 @@ export const StandingsTab: React.FC<StandingsTabProps> = ({
         </div>
       </div>
 
-      {isPrivileged && (
-        <div className="panel" style={{ border: "1px dashed var(--danger)" }}>
-          <h3 style={{ marginTop: 0, color: "var(--danger)" }}>
-            Break / Eliminations ({view === "teams" ? "Teams" : "Speakers"})
-          </h3>
-          <p className="text-muted" style={{ fontSize: "0.9rem" }}>
-            Enter the cut-off rank. The system will grab everyone from rank{" "}
-            {Number(eliminationThreshold || 0) + 1} downwards and apply the
-            update.
-          </p>
-          <form
-            onSubmit={handleEliminate}
+      <div className="panel" style={{ border: "1px dashed var(--danger)" }}>
+        <h3 style={{ marginTop: 0, color: "var(--danger)" }}>
+          Break / Eliminations ({view === "teams" ? "Teams" : "Speakers"})
+        </h3>
+        <p className="text-muted" style={{ fontSize: "0.9rem" }}>
+          Enter the cut-off rank. The system will grab everyone from rank{" "}
+          {Number(eliminationThreshold || 0) + 1} downwards and apply the
+          update.
+        </p>
+        <form
+          onSubmit={handleEliminate}
+          style={{
+            display: "flex",
+            gap: "1rem",
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <input
+            type="number"
+            min="1"
+            required
+            value={eliminationThreshold}
+            onChange={(e) =>
+              setEliminationThreshold(parseInt(e.target.value, 10) || "")
+            }
+            className="form-input"
+            placeholder="Cut-off rank (e.g., 8)"
+            style={{ maxWidth: "200px", marginBottom: 0 }}
+          />
+          <label
             style={{
               display: "flex",
-              gap: "1rem",
               alignItems: "center",
-              flexWrap: "wrap",
+              gap: "0.5rem",
+              color: "var(--text)",
             }}
           >
             <input
-              type="number"
-              min="1"
-              required
-              value={eliminationThreshold}
-              onChange={(e) =>
-                setEliminationThreshold(parseInt(e.target.value, 10) || "")
-              }
-              className="form-input"
-              placeholder="Cut-off rank (e.g., 8)"
-              style={{ maxWidth: "200px", marginBottom: 0 }}
+              type="checkbox"
+              checked={isEliminating}
+              onChange={(e) => setIsEliminating(e.target.checked)}
             />
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                color: "var(--text)",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={isEliminating}
-                onChange={(e) => setIsEliminating(e.target.checked)}
-              />
-              Mark as Eliminated (Uncheck to Restore)
-            </label>
-            <button
-              type="submit"
-              disabled={eliminateMutation.isPending || !eliminationThreshold}
-              className="btn btn-danger"
-            >
-              {eliminateMutation.isPending ? "Processing..." : "Execute Break"}
-            </button>
-          </form>
-        </div>
-      )}
+            Mark as Eliminated (Uncheck to Restore)
+          </label>
+          <button
+            type="submit"
+            disabled={eliminateMutation.isPending || !eliminationThreshold}
+            className="btn btn-danger"
+          >
+            {eliminateMutation.isPending ? "Processing..." : "Execute Break"}
+          </button>
+        </form>
+      </div>
 
       {view === "teams" && (
         <div>

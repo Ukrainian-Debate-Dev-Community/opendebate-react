@@ -6,24 +6,16 @@ import {
   fetchRoundRooms,
   createRoom,
   deleteRoom,
-} from "../../api/roundApi";
-import { fetchFormats } from "../../api/formatApi";
-import { fetchEventTeams } from "../../api/teamApi";
-import { fetchEventParticipants } from "../../api/participantApi";
+} from "../../../../api/round";
+import { fetchFormats } from "../../../../api/format";
+import { fetchEventTeams } from "../../../../api/team";
+import { fetchEventParticipants } from "../../../../api/participant";
 import { RoomScoringForm } from "../../../scoring/components/RoomScoringForm";
 import { RoomFeedbackForm } from "../../../scoring/components/RoomFeedbackForm";
 import { extractErrorMessage } from "../../../../utils/errorHandler";
 import type { CreateRoomPayload, Room } from "../../../../types/api";
 
-interface RoundsTabProps {
-  eventId: number;
-  isPrivileged: boolean;
-}
-
-export const RoundsTab: React.FC<RoundsTabProps> = ({
-  eventId,
-  isPrivileged,
-}) => {
+export const RoundsTab: React.FC<{ eventId: number }> = ({ eventId }) => {
   const queryClient = useQueryClient();
   const [showAddRound, setShowAddRound] = useState(false);
   const [newRoundName, setNewRoundName] = useState("");
@@ -52,17 +44,16 @@ export const RoundsTab: React.FC<RoundsTabProps> = ({
   const { data: formats } = useQuery({
     queryKey: ["formats"],
     queryFn: fetchFormats,
-    enabled: isPrivileged,
   });
   const { data: teamsData } = useQuery({
     queryKey: ["teams", eventId],
     queryFn: () => fetchEventTeams(eventId),
-    enabled: isPrivileged && showAddRoom,
+    enabled: showAddRoom,
   });
   const { data: participantsData } = useQuery({
     queryKey: ["participants", eventId, "all"],
     queryFn: () => fetchEventParticipants(eventId, 1, 1000),
-    enabled: isPrivileged && showAddRoom,
+    enabled: showAddRoom,
   });
 
   const addRoundMutation = useMutation({
@@ -190,17 +181,15 @@ export const RoundsTab: React.FC<RoundsTabProps> = ({
         }}
       >
         <h2>Tournament Rounds</h2>
-        {isPrivileged && (
-          <button
-            onClick={() => setShowAddRound(!showAddRound)}
-            className="btn btn-success"
-          >
-            {showAddRound ? "Cancel" : "+ Create Round"}
-          </button>
-        )}
+        <button
+          onClick={() => setShowAddRound(!showAddRound)}
+          className="btn btn-success"
+        >
+          {showAddRound ? "Cancel" : "+ Create Round"}
+        </button>
       </div>
 
-      {showAddRound && isPrivileged && (
+      {showAddRound && (
         <form
           onSubmit={handleAddRoundSubmit}
           className="form-grid panel"
@@ -305,17 +294,15 @@ export const RoundsTab: React.FC<RoundsTabProps> = ({
             }}
           >
             <h2 style={{ margin: 0 }}>Pairing Matrix</h2>
-            {isPrivileged && (
-              <button
-                onClick={() => setShowAddRoom(!showAddRoom)}
-                className="btn btn-info btn-sm"
-              >
-                {showAddRoom ? "Cancel Room" : "+ Build Room"}
-              </button>
-            )}
+            <button
+              onClick={() => setShowAddRoom(!showAddRoom)}
+              className="btn btn-info btn-sm"
+            >
+              {showAddRoom ? "Cancel Room" : "+ Build Room"}
+            </button>
           </div>
 
-          {showAddRoom && isPrivileged && (
+          {showAddRoom && (
             <form
               onSubmit={handleAddRoomSubmit}
               className="panel"
@@ -507,6 +494,7 @@ export const RoundsTab: React.FC<RoundsTabProps> = ({
                       ))}
                     </ul>
                   </div>
+
                   <div
                     style={{
                       padding: "1rem",
@@ -516,18 +504,16 @@ export const RoundsTab: React.FC<RoundsTabProps> = ({
                       gap: "0.5rem",
                     }}
                   >
-                    {isPrivileged &&
-                      (room.status === "pending" ||
-                        room.status === "judging") && (
-                        <button
-                          onClick={() => setScoringRoom(room)}
-                          className="btn btn-success btn-sm"
-                          style={{ flex: 1 }}
-                        >
-                          Enter Scores
-                        </button>
-                      )}
-
+                    {(room.status === "pending" ||
+                      room.status === "judging") && (
+                      <button
+                        onClick={() => setScoringRoom(room)}
+                        className="btn btn-success btn-sm"
+                        style={{ flex: 1 }}
+                      >
+                        Enter Scores
+                      </button>
+                    )}
                     {room.status === "completed" && (
                       <button
                         onClick={() => setFeedbackRoom(room)}
@@ -537,19 +523,16 @@ export const RoundsTab: React.FC<RoundsTabProps> = ({
                         Give Feedback
                       </button>
                     )}
-
-                    {isPrivileged && (
-                      <button
-                        onClick={() => {
-                          if (window.confirm("Delete this room?"))
-                            removeRoomMutation.mutate(room.id);
-                        }}
-                        className="btn btn-outline-danger btn-sm"
-                        style={{ flex: 1 }}
-                      >
-                        Delete
-                      </button>
-                    )}
+                    <button
+                      onClick={() => {
+                        if (window.confirm("Delete this room?"))
+                          removeRoomMutation.mutate(room.id);
+                      }}
+                      className="btn btn-outline-danger btn-sm"
+                      style={{ flex: 1 }}
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
               ))}
