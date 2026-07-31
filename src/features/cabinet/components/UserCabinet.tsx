@@ -8,12 +8,12 @@ import {
   updatePassword,
   fetchUserSchedule,
   fetchUserHistory,
+  fetchUserStats,
   claimIdentity,
 } from "../../../api/user";
-
 import { EventCard } from "../../../components/ui/EventCard";
 
-type CabinetTab = "profile" | "schedule" | "history" | "claim";
+type CabinetTab = "profile" | "schedule" | "history" | "stats" | "claim";
 
 export const UserCabinet: React.FC = () => {
   const queryClient = useQueryClient();
@@ -37,6 +37,12 @@ export const UserCabinet: React.FC = () => {
     queryKey: ["userHistory"],
     queryFn: fetchUserHistory,
     enabled: activeTab === "history",
+  });
+
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ["userStats", user?.id],
+    queryFn: () => fetchUserStats(user!.id),
+    enabled: activeTab === "stats" && !!user?.id,
   });
 
   const usernameMutation = useMutation({
@@ -69,6 +75,7 @@ export const UserCabinet: React.FC = () => {
       setClaimToken("");
       queryClient.invalidateQueries({ queryKey: ["userSchedule"] });
       queryClient.invalidateQueries({ queryKey: ["userHistory"] });
+      queryClient.invalidateQueries({ queryKey: ["userStats"] });
     },
     onError: (error) =>
       alert(extractErrorMessage(error, "Failed to claim identity.")),
@@ -112,6 +119,12 @@ export const UserCabinet: React.FC = () => {
           className={`tab-btn ${activeTab === "history" ? "active" : ""}`}
         >
           Tournament History
+        </button>
+        <button
+          onClick={() => setActiveTab("stats")}
+          className={`tab-btn ${activeTab === "stats" ? "active" : ""}`}
+        >
+          My Stats
         </button>
         <button
           onClick={() => setActiveTab("claim")}
@@ -295,6 +308,86 @@ export const UserCabinet: React.FC = () => {
                       />
                     ))
                   )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "stats" && (
+          <div>
+            <h2 style={{ marginTop: 0 }}>Career Statistics</h2>
+            {statsLoading ? (
+              <p>Loading your debate history...</p>
+            ) : !stats ? (
+              <div className="panel">
+                <p className="text-muted" style={{ margin: 0 }}>
+                  This user has not participated as a speaker in any logged
+                  debates.
+                </p>
+              </div>
+            ) : (
+              <div className="form-grid" style={{ gap: "2rem" }}>
+                <div
+                  className="panel"
+                  style={{ borderLeft: "4px solid var(--primary)" }}
+                >
+                  <h3 style={{ marginTop: 0 }}>Speaker Record</h3>
+                  <ul
+                    style={{
+                      listStyle: "none",
+                      padding: 0,
+                      margin: 0,
+                      fontSize: "1.1rem",
+                      lineHeight: "1.8",
+                    }}
+                  >
+                    <li>
+                      <strong>Total Ballots Received:</strong>{" "}
+                      {stats.overview?.total_ballots_received}
+                    </li>
+                    <li>
+                      <strong>Total Debates Ranked:</strong>{" "}
+                      {stats.overview?.total_debates_ranked}
+                    </li>
+                    <li>
+                      <strong>Average Score:</strong>{" "}
+                      {stats.overview?.average_speaker_score}
+                    </li>
+                    <li>
+                      <strong>Highest Score:</strong>{" "}
+                      {stats.overview?.highest_score}
+                    </li>
+                    <li>
+                      <strong>Lowest Score:</strong>{" "}
+                      {stats.overview?.lowest_score}
+                    </li>
+                  </ul>
+                </div>
+
+                <div
+                  className="panel"
+                  style={{ borderLeft: "4px solid var(--success)" }}
+                >
+                  <h3 style={{ marginTop: 0 }}>Placements & Wins</h3>
+                  <ul
+                    style={{
+                      listStyle: "none",
+                      padding: 0,
+                      margin: 0,
+                      fontSize: "1.1rem",
+                      lineHeight: "1.8",
+                    }}
+                  >
+                    <li>
+                      <strong>First Places (Wins):</strong>{" "}
+                      {stats.placements?.first_places}
+                    </li>
+                    <li>
+                      <strong>Overall Win Rate:</strong>{" "}
+                      {stats.placements?.win_rate_percentage}%
+                    </li>
+                  </ul>
                 </div>
               </div>
             )}

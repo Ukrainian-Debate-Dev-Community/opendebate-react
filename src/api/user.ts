@@ -30,3 +30,8 @@ export const claimIdentity = async (
   );
   return response.data;
 };
+
+export const fetchUserStats = async (userId: number) => {
+  const response = await apiClient.get(`/users/${userId}/stats`);
+  return response.data.data;
+};
