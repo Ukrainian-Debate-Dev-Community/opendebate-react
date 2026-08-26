@@ -1,4 +1,26 @@
-# Let's vibe
+## Local Setup & Installation
 
-The initial first-commit structure and packages are proposed by an AI and will be modified throughout the workflow.
-Please review this comment and propose corrections if you spot any errors.
+1. **Clone the repository:**
+
+   ```bash
+   git clone https://github.com/DmytroTarasenk0/opendebate-react.git
+   cd opendebate-react
+   ```
+
+2. **Install dependencies:**
+
+   ```bash
+   npm install
+   ```
+
+3. **Environment Configuration:**
+   The only thing in the .env is the API_URL:
+
+   ```bash
+   VITE_API_BASE_URL=http://localhost:5000/api
+   ```
+
+4. **Start the Development Server:**
+   ```bash
+   npm run dev
+   ```
